@@ -1,0 +1,59 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Build output
+build/
+dist/
+*.tgz
+
+# Logs
+logs/
+*.log
+
+# Dependency directories
+jspm_packages/
+
+# IDE or editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# NPM package lock
+package-lock.json
+
+# Yarn lock
+yarn.lock
+
+# Misc
+*.swp
+*.swo
+*.swn
+*.tmp
+
+# React specific
+.next/
+.next.cache/
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Docker
+docker-compose.override.yml
+
+# Local environment settings
+.env.local
+.env.*.local
