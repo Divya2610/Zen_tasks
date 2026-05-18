@@ -1,11 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { user } from "../../assets/data";
+
+const getUserFromStorage = () => {
+  try {
+    const data = localStorage.getItem("userInfo");
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+};
 
 const initialState = {
-  user: localStorage.getItem("userInfo")
-    ? JSON.parse(localStorage.getItem("userInfo"))
-    : user,
-
+  user: getUserFromStorage(),
   isSidebarOpen: false,
 };
 
@@ -17,10 +22,15 @@ const authSlice = createSlice({
       state.user = action.payload;
       localStorage.setItem("userInfo", JSON.stringify(action.payload));
     },
-    logout: (state, action) => {
+
+    logout: (state) => {
       state.user = null;
+      // ✅ Only "userInfo" exists now — "token" was part of the old Bearer flow
+      // and is no longer stored anywhere. Cookie is cleared server-side via
+      // res.clearCookie("access_token") in the /signout route.
       localStorage.removeItem("userInfo");
     },
+
     setOpenSidebar: (state, action) => {
       state.isSidebarOpen = action.payload;
     },

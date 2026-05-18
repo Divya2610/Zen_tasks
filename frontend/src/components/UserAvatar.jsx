@@ -5,47 +5,35 @@ import { Fragment } from "react";
 import { FaUser, FaUserLock } from "react-icons/fa";
 import { IoLogOutOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import { getInitials } from "../utils"; // Ensure this function exists in your utils
+import { getInitials } from "../utils";
+import { handleLogout } from "../utils/logout";
+// ✅ FIX: import the two modals that were missing from the JSX entirely
+import ProfileModal from "./ProfileModal";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 const UserAvatar = () => {
-  const [open, setOpen] = useState(false);
-  const [openPassword, setOpenPassword] = useState(false);
-  const { user } = useSelector((state) => state.auth); // Get user from redux
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [open, setOpen]                 = useState(false); // Profile
+  const [openPassword, setOpenPassword] = useState(false); // Change Password
 
-  const logoutHandler = async () => {
-    try {
-      const response = await fetch("http://localhost:5001/signout", {
-        method: "POST",
-        credentials: "include", // Include credentials for the server to clear the cookie
-      });
+  const { user } = useSelector((state) => state.auth);
+  const dispatch  = useDispatch();
+  const navigate  = useNavigate();
 
-      if (response.ok) {
-        // Clear any user data in the frontend (e.g., Redux state)
-        navigate("/log-in");
-      } else {
-        console.error("Logout failed:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Logout failed:", error.message);
-    }
-  };
+  const logoutHandler = () => handleLogout(dispatch, navigate);
 
-  // Make sure initials are generated from the name or email
-  const userInitials = user?.name ? getInitials(user.name) : user?.email ? getInitials(user.email) : "U";
+  const userInitials = user?.username
+    ? getInitials(user.username)
+    : user?.email
+    ? getInitials(user.email)
+    : "U";
 
   return (
     <>
       <div>
         <Menu as="div" className="relative inline-block text-left">
-          <div>
-            <Menu.Button className="w-10 h-10 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full bg-blue-600">
-              <span className="text-white font-semibold">
-                {userInitials}
-              </span>
-            </Menu.Button>
-          </div>
+          <Menu.Button className="w-10 h-10 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full bg-blue-600">
+            <span className="text-white font-semibold">{userInitials}</span>
+          </Menu.Button>
 
           <Transition
             as={Fragment}
@@ -62,9 +50,11 @@ const UserAvatar = () => {
                   {({ active }) => (
                     <button
                       onClick={() => setOpen(true)}
-                      className="text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-base"
+                      className={`${
+                        active ? "bg-gray-50" : ""
+                      } text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-base`}
                     >
-                      <FaUser className="mr-2" aria-hidden="true" />
+                      <FaUser className="mr-2" />
                       Profile
                     </button>
                   )}
@@ -74,9 +64,11 @@ const UserAvatar = () => {
                   {({ active }) => (
                     <button
                       onClick={() => setOpenPassword(true)}
-                      className={`text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-base`}
+                      className={`${
+                        active ? "bg-gray-50" : ""
+                      } text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-base`}
                     >
-                      <FaUserLock className="mr-2" aria-hidden="true" />
+                      <FaUserLock className="mr-2" />
                       Change Password
                     </button>
                   )}
@@ -86,9 +78,11 @@ const UserAvatar = () => {
                   {({ active }) => (
                     <button
                       onClick={logoutHandler}
-                      className={`text-red-600 group flex w-full items-center rounded-md px-2 py-2 text-base`}
+                      className={`${
+                        active ? "bg-gray-50" : ""
+                      } text-red-600 group flex w-full items-center rounded-md px-2 py-2 text-base`}
                     >
-                      <IoLogOutOutline className="mr-2" aria-hidden="true" />
+                      <IoLogOutOutline className="mr-2" />
                       Logout
                     </button>
                   )}
@@ -98,6 +92,15 @@ const UserAvatar = () => {
           </Transition>
         </Menu>
       </div>
+
+      {/*
+        ✅ THE ACTUAL FIX:
+        These two modals were never rendered in the original component.
+        open/openPassword state was being set but nothing was listening to it,
+        so clicking Profile or Change Password appeared to do nothing.
+      */}
+      <ProfileModal        open={open}         setOpen={setOpen}         />
+      <ChangePasswordModal open={openPassword} setOpen={setOpenPassword} />
     </>
   );
 };

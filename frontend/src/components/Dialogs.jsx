@@ -3,9 +3,11 @@ import clsx from "clsx";
 import { FaQuestion } from "react-icons/fa";
 import ModalWrapper from "./ModalWrapper";
 import Button from "./Button";
-import axios from "axios";
 
-export default function ConfirmatioDialog({
+// ✅ Cleaned up: no hardcoded axios URL — caller passes onClick which owns the API call
+// ✅ Removed duplicate commented-out function at top
+// ✅ ConfirmationDialog (fixed spelling) is now fully generic — works for delete, restore, any action
+export default function ConfirmationDialog({
   open,
   setOpen,
   msg,
@@ -13,7 +15,6 @@ export default function ConfirmatioDialog({
   onClick = () => {},
   type = "delete",
   setType = () => {},
-  userId
 }) {
   const closeDialog = () => {
     setType("delete");
@@ -21,62 +22,40 @@ export default function ConfirmatioDialog({
     setOpen(false);
   };
 
-  // const handleDeleteUser = async () => {
-  //   try {
-  //     await axios.delete(⁠ http://localhost:5001/users/${userId} ⁠);
-  //     onClick();
-  //   } catch (error) {
-  //     console.error("Error deleting user:", error);
-  //   }
-  // };
+  const isDestructive = type !== "restore" && type !== "restoreAll";
 
-  const handleDeleteUser = async () => {
-    console.log("User ID for deletion:", userId); // Check if this is defined
-    try {
-      await axios.delete(`http://localhost:5001/users/${userId}`);
-      onClick();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-    }
-  };
   return (
     <ModalWrapper open={open} setOpen={closeDialog}>
-      <div className='py-4 w-full flex flex-col gap-4 items-center justify-center'>
-        <Dialog.Title as='h3' className=''>
-          <p
-            className={clsx(
-              "p-3 rounded-full ",
-              type === "restore" || type === "restoreAll"
-                ? "text-yellow-600 bg-yellow-100"
-                : "text-red-600 bg-red-200"
-            )}
-          >
+      <div className="py-4 w-full flex flex-col gap-4 items-center justify-center">
+        <Dialog.Title as="h3">
+          <p className={clsx(
+            "p-3 rounded-full",
+            isDestructive ? "text-red-600 bg-red-200" : "text-yellow-600 bg-yellow-100"
+          )}>
             <FaQuestion size={60} />
           </p>
         </Dialog.Title>
 
-        <p className='text-center text-gray-500'>
+        <p className="text-center text-gray-500">
           {msg ?? "Are you sure you want to delete the selected record?"}
         </p>
 
-        <div className='bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4'>
+        <div className="bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4">
           <Button
-            type='button'
+            type="button"
             className={clsx(
-              " px-8 text-sm font-semibold text-white sm:w-auto",
-              type === "restore" || type === "restoreAll"
-                ? "bg-yellow-600"
-                : "bg-red-600 hover:bg-red-500"
+              "px-8 text-sm font-semibold text-white sm:w-auto",
+              isDestructive ? "bg-red-600 hover:bg-red-500" : "bg-yellow-600"
             )}
-            onClick={type === "restore" ? onClick : handleDeleteUser}
-            label={type === "restore" ? "Restore" : "Delete"}
+            // ✅ onClick is passed in from parent — parent owns the API call
+            onClick={() => { onClick(); closeDialog(); }}
+            label={isDestructive ? "Delete" : "Restore"}
           />
-
           <Button
-            type='button'
-            className='bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border'
-            onClick={() => closeDialog()}
-            label='Cancel'
+            type="button"
+            className="bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border"
+            onClick={closeDialog}
+            label="Cancel"
           />
         </div>
       </div>
@@ -84,44 +63,164 @@ export default function ConfirmatioDialog({
   );
 }
 
-export function UserAction({ open, setOpen, onClick = () => {}, userId }) {
-  const closeDialog = () => {
-    setOpen(false);
-  };
-
+// ✅ UserAction kept separate — different purpose (activate/deactivate)
+export function UserAction({ open, setOpen, onClick = () => {} }) {
   return (
-    <ModalWrapper open={open} setOpen={closeDialog}>
-      <div className='py-4 w-full flex flex-col gap-4 items-center justify-center'>
-        <Dialog.Title as='h3' className=''>
-          <p className={clsx("p-3 rounded-full ", "text-red-600 bg-red-200")}>
+    <ModalWrapper open={open} setOpen={() => setOpen(false)}>
+      <div className="py-4 w-full flex flex-col gap-4 items-center justify-center">
+        <Dialog.Title as="h3">
+          <p className="p-3 rounded-full text-red-600 bg-red-200">
             <FaQuestion size={60} />
           </p>
         </Dialog.Title>
 
-        <p className='text-center text-gray-500'>
-          {"Are you sure you want to activate or deactivate this account?"}
+        <p className="text-center text-gray-500">
+          Are you sure you want to activate or deactivate this account?
         </p>
 
-        <div className='bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4'>
+        <div className="bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4">
           <Button
-            type='button'
-            className={clsx(
-              " px-8 text-sm font-semibold text-white sm:w-auto",
-              "bg-red-600 hover:bg-red-500"
-            )}
-            onClick={onClick}
-            label={"Yes"}
+            type="button"
+            className="bg-red-600 hover:bg-red-500 px-8 text-sm font-semibold text-white sm:w-auto"
+            onClick={() => { onClick(); setOpen(false); }}
+            label="Yes"
           />
-
           <Button
-            type='button'
-            className='bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border'
-            onClick={() => closeDialog()}
-            label='No'
+            type="button"
+            className="bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border"
+            onClick={() => setOpen(false)}
+            label="No"
           />
         </div>
       </div>
     </ModalWrapper>
   );
 }
+
+// import { Dialog } from "@headlessui/react";
+// import clsx from "clsx";
+// import { FaQuestion } from "react-icons/fa";
+// import ModalWrapper from "./ModalWrapper";
+// import Button from "./Button";
+// import axios from "axios";
+
+// export default function ConfirmatioDialog({
+//   open,
+//   setOpen,
+//   msg,
+//   setMsg = () => {},
+//   onClick = () => {},
+//   type = "delete",
+//   setType = () => {},
+//   userId
+// }) {
+//   const closeDialog = () => {
+//     setType("delete");
+//     setMsg(null);
+//     setOpen(false);
+//   };
+
+//   // const handleDeleteUser = async () => {
+//   //   try {
+//   //     await axios.delete(⁠ http://localhost:5001/users/${userId} ⁠);
+//   //     onClick();
+//   //   } catch (error) {
+//   //     console.error("Error deleting user:", error);
+//   //   }
+//   // };
+
+//   const handleDeleteUser = async () => {
+//     console.log("User ID for deletion:", userId); // Check if this is defined
+//     try {
+//       await axios.delete(`http://localhost:5001/users/${userId}`);
+//       onClick();
+//     } catch (error) {
+//       console.error("Error deleting user:", error);
+//     }
+//   };
+//   return (
+//     <ModalWrapper open={open} setOpen={closeDialog}>
+//       <div className='py-4 w-full flex flex-col gap-4 items-center justify-center'>
+//         <Dialog.Title as='h3' className=''>
+//           <p
+//             className={clsx(
+//               "p-3 rounded-full ",
+//               type === "restore" || type === "restoreAll"
+//                 ? "text-yellow-600 bg-yellow-100"
+//                 : "text-red-600 bg-red-200"
+//             )}
+//           >
+//             <FaQuestion size={60} />
+//           </p>
+//         </Dialog.Title>
+
+//         <p className='text-center text-gray-500'>
+//           {msg ?? "Are you sure you want to delete the selected record?"}
+//         </p>
+
+//         <div className='bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4'>
+//           <Button
+//             type='button'
+//             className={clsx(
+//               " px-8 text-sm font-semibold text-white sm:w-auto",
+//               type === "restore" || type === "restoreAll"
+//                 ? "bg-yellow-600"
+//                 : "bg-red-600 hover:bg-red-500"
+//             )}
+//             onClick={type === "restore" ? onClick : handleDeleteUser}
+//             label={type === "restore" ? "Restore" : "Delete"}
+//           />
+
+//           <Button
+//             type='button'
+//             className='bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border'
+//             onClick={() => closeDialog()}
+//             label='Cancel'
+//           />
+//         </div>
+//       </div>
+//     </ModalWrapper>
+//   );
+// }
+
+// export function UserAction({ open, setOpen, onClick = () => {}, userId }) {
+//   const closeDialog = () => {
+//     setOpen(false);
+//   };
+
+//   return (
+//     <ModalWrapper open={open} setOpen={closeDialog}>
+//       <div className='py-4 w-full flex flex-col gap-4 items-center justify-center'>
+//         <Dialog.Title as='h3' className=''>
+//           <p className={clsx("p-3 rounded-full ", "text-red-600 bg-red-200")}>
+//             <FaQuestion size={60} />
+//           </p>
+//         </Dialog.Title>
+
+//         <p className='text-center text-gray-500'>
+//           {"Are you sure you want to activate or deactivate this account?"}
+//         </p>
+
+//         <div className='bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4'>
+//           <Button
+//             type='button'
+//             className={clsx(
+//               " px-8 text-sm font-semibold text-white sm:w-auto",
+//               "bg-red-600 hover:bg-red-500"
+//             )}
+//             onClick={onClick}
+//             label={"Yes"}
+//           />
+
+//           <Button
+//             type='button'
+//             className='bg-white px-8 text-sm font-semibold text-gray-900 sm:w-auto border'
+//             onClick={() => closeDialog()}
+//             label='No'
+//           />
+//         </div>
+//       </div>
+//     </ModalWrapper>
+//   );
+// }
 

@@ -1,51 +1,40 @@
+require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
-const fs = require("fs");
-require("dotenv").config(); // To load environment variables from .env file
+const cors = require("cors");
+const cookieParser = require("cookie-parser"); // ✅ FIX: required for req.cookies to work
+const connectDB = require("./config/configdb");
+const userRouter = require("./routers/user.route");
+const taskRouter = require("./routers/task.route");
+const errorHandler = require("./middleware/errorMiddleware");
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const port = process.env.PORT || 5001;
-const cors = require("cors");
 
-const userRouter = require("./routers/user.route");
-const taskRouter = require("./routers/task.route");
-
-// MongoDB Atlas connection URI from environment variable
-const uri = process.env.MONGO;
-
-// Connect to MongoDB Atlas using Mongoose
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  ssl: true, // Keep this if you want to use SSL/TLS
-  // sslValidate: true, // Remove this line
-  // If you have a CA certificate, use it; otherwise, you can omit this
-  // sslCA: [fs.readFileSync('/path/to/ca.pem')] 
-}).then(() => {
-  console.log("Connected to MongoDB");
-}).catch((error) => {
-  console.error("MongoDB connection error:", error);
-});
-
-// Allow requests from specific origins with credentials
-const allowedOrigins = ['http://localhost:5173']; // Add other origins as needed
-
-// CORS middleware configuration
+// CORS configuration
+const allowedOrigins = ["http://localhost:5173"];
 const corsOptions = {
   origin: allowedOrigins,
-  credentials: true, // Allow credentials (cookies, authorization headers)
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] // Allow these HTTP methods
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 };
-
-// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Middleware
+// Body parser
 app.use(express.json());
-app.use(userRouter);
-app.use(taskRouter);
 
-// Start Express server
+// ✅ FIX: parse cookies so req.cookies.access_token works in authMiddleware
+app.use(cookieParser());
+
+// Routes
+app.use("/api", userRouter);
+app.use("/api", taskRouter);
+
+// Global error handler — must be last
+app.use(errorHandler);
+
 app.listen(port, () => {
-  console.log("Server is up on port: " + port);
+  console.log(`Server is up on port: ${port}`);
 });
