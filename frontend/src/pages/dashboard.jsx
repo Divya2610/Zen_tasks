@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   MdAdminPanelSettings,
@@ -232,3 +233,204 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
+
+// // src/pages/dashboard.jsx
+// import React, { useEffect, useState } from "react";
+// import { useSelector } from "react-redux";
+// import { Link } from "react-router-dom";
+// import clsx from "clsx";
+// import { toast } from "sonner";
+// import Loader from "../components/Loader.jsx";
+// import Chart from "../components/Chart.jsx";
+// import api from "../utils/api.js";
+
+// const STAGE_CONFIG = {
+//   todo: { label: "To Do", color: "bg-purple-100 text-purple-700", icon: "📝" },
+//   "in progress": { label: "In Progress", color: "bg-yellow-100 text-yellow-700", icon: "⏳" },
+//   completed: { label: "Completed", color: "bg-green-100 text-green-700", icon: "✅" },
+// };
+
+// export default function Dashboard() {
+//   const { user } = useSelector((state) => state.auth);
+//   const isAdmin = user?.isAdmin;
+
+//   const [stats, setStats] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const fetchStats = async () => {
+//       try {
+//         const { data } = await api.get("/task/dashboard");
+//         setStats(data);
+//       } catch (err) {
+//         toast.error("Failed to load dashboard stats");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchStats();
+//   }, []);
+
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-64">
+//         <Loader />
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="w-full">
+//       {/* ── Welcome Banner ── */}
+//       <div className="mb-6">
+//         <h1 className="text-xl font-bold text-gray-800">
+//           Welcome back, {user?.name?.split(" ")[0]} 👋
+//         </h1>
+//         <p className="text-sm text-gray-500 mt-0.5">
+//           {isAdmin
+//             ? "Here's an overview of all tasks."
+//             : "Here's a summary of tasks assigned to you."}
+//         </p>
+//       </div>
+
+//       {/* ── Stage Summary Cards ── */}
+//       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+//         {Object.entries(STAGE_CONFIG).map(([stage, config]) => (
+//           <Link
+//             key={stage}
+//             to={`/tasks?stage=${stage}`}
+//             className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow"
+//           >
+//             <div className="flex items-center gap-3">
+//               <span className="text-2xl">{config.icon}</span>
+//               <div>
+//                 <p className="text-xs text-gray-500">{config.label}</p>
+//                 <p className="text-2xl font-bold text-gray-800">
+//                   {stats?.tasks?.[stage] || 0}
+//                 </p>
+//               </div>
+//             </div>
+//             <div className="mt-2">
+//               <span
+//                 className={clsx(
+//                   "text-xs font-medium px-2 py-0.5 rounded-full",
+//                   config.color
+//                 )}
+//               >
+//                 {stage}
+//               </span>
+//             </div>
+//           </Link>
+//         ))}
+//       </div>
+
+//       {/* ── Chart (admin) or simple bar (team member) ── */}
+//       {stats?.graphData?.length > 0 && (
+//         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
+//           <h2 className="text-sm font-semibold text-gray-700 mb-3">
+//             Task Overview
+//           </h2>
+//           <Chart data={stats.graphData} />
+//         </div>
+//       )}
+
+//       {/* ── Recent Tasks ── */}
+//       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
+//         <div className="flex items-center justify-between mb-3">
+//           <h2 className="text-sm font-semibold text-gray-700">
+//             {isAdmin ? "Recent Tasks" : "My Recent Tasks"}
+//           </h2>
+//           <Link
+//             to="/tasks"
+//             className="text-xs text-blue-600 hover:underline"
+//           >
+//             View all →
+//           </Link>
+//         </div>
+
+//         {stats?.last10Task?.length > 0 ? (
+//           <div className="space-y-2">
+//             {stats.last10Task.slice(0, 5).map((task) => (
+//               <Link
+//                 key={task._id}
+//                 to={`/task/${task._id}`}
+//                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+//               >
+//                 <span
+//                   className={clsx(
+//                     "w-2 h-2 rounded-full shrink-0",
+//                     task.priority === "high"
+//                       ? "bg-red-400"
+//                       : task.priority === "medium"
+//                       ? "bg-yellow-400"
+//                       : "bg-blue-400"
+//                   )}
+//                 />
+//                 <span className="text-sm text-gray-700 flex-1 truncate">
+//                   {task.title}
+//                 </span>
+//                 <span
+//                   className={clsx(
+//                     "text-xs px-2 py-0.5 rounded-full capitalize shrink-0",
+//                     STAGE_CONFIG[task.stage]?.color || "bg-gray-100 text-gray-500"
+//                   )}
+//                 >
+//                   {task.stage}
+//                 </span>
+//               </Link>
+//             ))}
+//           </div>
+//         ) : (
+//           <p className="text-sm text-gray-400 py-4 text-center">
+//             No tasks to show.
+//           </p>
+//         )}
+//       </div>
+
+//       {/* ── Users Table (Admin only) ── */}
+//       {isAdmin && stats?.users?.length > 0 && (
+//         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+//           <div className="flex items-center justify-between mb-3">
+//             <h2 className="text-sm font-semibold text-gray-700">Team Members</h2>
+//             <Link to="/users" className="text-xs text-blue-600 hover:underline">
+//               Manage →
+//             </Link>
+//           </div>
+//           <div className="space-y-2">
+//             {stats.users.slice(0, 5).map((u) => (
+//               <div
+//                 key={u._id}
+//                 className="flex items-center gap-3 p-2 rounded-lg"
+//               >
+//                 <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+//                   {u.name?.[0]?.toUpperCase()}
+//                 </div>
+//                 <div className="flex-1 min-w-0">
+//                   <p className="text-sm font-medium text-gray-700 truncate">
+//                     {u.name}
+//                   </p>
+//                   <p className="text-xs text-gray-400 truncate">{u.title}</p>
+//                 </div>
+//                 <span
+//                   className={clsx(
+//                     "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
+//                     u.isAdmin
+//                       ? "bg-purple-100 text-purple-700"
+//                       : "bg-gray-100 text-gray-600"
+//                   )}
+//                 >
+//                   {u.isAdmin ? "Admin" : "Member"}
+//                 </span>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+

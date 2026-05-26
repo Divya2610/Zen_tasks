@@ -1,3 +1,110 @@
+// // src/components/Sidebar.jsx
+// import React from "react";
+// import { Link, useLocation } from "react-router-dom";
+// import { useSelector } from "react-redux";
+// import clsx from "clsx";
+
+// // ── Nav items visible to ALL users ───────────────────────────────────────────
+// const COMMON_LINKS = [
+//   {
+//     label: "Dashboard",
+//     path: "/dashboard",
+//     icon: "🏠",
+//   },
+//   {
+//     label: "My Tasks",
+//     path: "/tasks",
+//     icon: "✅",
+//   },
+// ];
+
+// // ── Nav items visible only to ADMINS ─────────────────────────────────────────
+// const ADMIN_LINKS = [
+//   {
+//     label: "Users",
+//     path: "/users",
+//     icon: "👥",
+//   },
+//   {
+//     label: "Trash",
+//     path: "/trashed",
+//     icon: "🗑️",
+//   },
+// ];
+
+// export default function Sidebar() {
+//   const { user } = useSelector((state) => state.auth);
+//   const isAdmin = user?.isAdmin;
+//   const location = useLocation();
+
+//   const navLinks = isAdmin ? [...COMMON_LINKS, ...ADMIN_LINKS] : COMMON_LINKS;
+
+//   return (
+//     <aside className="w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col py-6 px-4 shadow-sm">
+//       {/* Logo */}
+//       <div className="mb-8 px-2">
+//         <span className="text-xl font-bold text-blue-600">⚡ ZenTasks</span>
+//       </div>
+
+//       {/* User Info */}
+//       <div className="mb-6 px-2">
+//         <div className="flex items-center gap-3">
+//           <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+//             {user?.name?.[0]?.toUpperCase() || "U"}
+//           </div>
+//           <div className="min-w-0">
+//             <p className="text-sm font-semibold text-gray-800 truncate">
+//               {user?.name}
+//             </p>
+//             <p className="text-xs text-gray-400 capitalize">
+//               {isAdmin ? "Admin" : "Team Member"}
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Navigation */}
+//       <nav className="flex flex-col gap-1 flex-1">
+//         {navLinks.map(({ label, path, icon }) => {
+//           const active =
+//             location.pathname === path ||
+//             (path !== "/dashboard" && location.pathname.startsWith(path));
+
+//           return (
+//             <Link
+//               key={path}
+//               to={path}
+//               className={clsx(
+//                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+//                 active
+//                   ? "bg-blue-50 text-blue-700"
+//                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+//               )}
+//             >
+//               <span className="text-base">{icon}</span>
+//               {label}
+//             </Link>
+//           );
+//         })}
+//       </nav>
+
+//       {/* Bottom: team member notice */}
+//       {!isAdmin && (
+//         <div className="mt-4 px-2">
+//           <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-600">
+//             <p className="font-semibold mb-0.5">Team Member</p>
+//             <p className="text-blue-500">
+//               You can view and update the status of tasks assigned to you, and
+//               upload documents.
+//             </p>
+//           </div>
+//         </div>
+//       )}
+//     </aside>
+//   );
+// }
+
+
 import { Transition } from "@headlessui/react";
 import clsx from "clsx";
 import { Fragment, useRef } from "react";

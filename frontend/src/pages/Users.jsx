@@ -6,7 +6,8 @@ import { getInitials } from "../utils/index";
 import clsx from "clsx";
 import ConfirmatioDialog, { UserAction } from "../components/Dialogs";
 import AddUser from "../components/AddUser";
-import axios from "axios";
+import api from "../utils/api";
+import { toast } from "sonner";
 
 const Users = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -17,18 +18,18 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
 const fetchUsers = async () => {
+  setLoading(true);
+  setError(null);
   try {
     // ✅ uses api.js — no hardcoded URL
     const { data } = await api.get("/users");
     setUsers(data);
   } catch (error) {
+    setError(error?.response?.data?.message || "Failed to load users");
     toast.error("Failed to load users");
+  } finally {
+    setLoading(false);
   }
 };
 

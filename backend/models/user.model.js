@@ -21,8 +21,16 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "member"],  // ✅ ADDED: role field that controller expects
+      enum: ["admin", "member"],
       default: "member",
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
     password: {
       type: String,

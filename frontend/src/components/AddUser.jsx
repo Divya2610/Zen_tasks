@@ -9,7 +9,7 @@ import Button from "./Button";
 import { toast } from "sonner";
 import api from "../utils/api"; // ✅ centralized API, no hardcoded URL
 
-const AddUser = ({ open, setOpen, userData }) => {
+const AddUser = ({ open, setOpen, userData, onSuccess }) => {
   const defaultValues = userData ?? {};
   const { user } = useSelector((state) => state.auth);
 
@@ -32,11 +32,12 @@ const AddUser = ({ open, setOpen, userData }) => {
         toast.success("User updated successfully");
       } else {
         // Create new user
-        await api.post("/signup", data);
+        await api.post("/users", data);
         toast.success("User created successfully");
       }
       reset();
       setOpen(false);
+      onSuccess?.();
     } catch (error) {
       // ✅ Fixed: was console.error only — now user sees the error
       toast.error(
@@ -82,6 +83,22 @@ const AddUser = ({ open, setOpen, userData }) => {
             register={register("email", { required: "Email is required!" })}
             error={errors.email?.message || ""}
           />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Login Role
+            </label>
+            <select
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+              {...register("role", { required: "Role is required!" })}
+              defaultValue={userData?.role || "member"}
+            >
+              <option value="member">Team member</option>
+              <option value="admin">Admin</option>
+            </select>
+            {errors.role?.message && (
+              <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>
+            )}
+          </div>
           {/* ✅ Only show password field when creating a new user */}
           {!userData && (
             <Textbox

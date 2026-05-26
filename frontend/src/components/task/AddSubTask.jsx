@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useTasks } from "../../context/TaskContext";
 import UserList from "./UserList";
 
-const AddSubTask = ({ open, setOpen, id }) => {
+const AddSubTask = ({ open, setOpen, id, onSuccess }) => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedTo, setAssignedTo]     = useState([]);
@@ -29,6 +29,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
       reset();
       setAssignedTo([]);
       setOpen(false);
+      onSuccess?.();
     }
   };
 

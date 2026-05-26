@@ -1,9 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { normalizeRole } from "../../utils/role";
 
 const getUserFromStorage = () => {
   try {
     const data = localStorage.getItem("userInfo");
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    const user = JSON.parse(data);
+    return { ...user, role: normalizeRole(user) };
   } catch {
     return null;
   }
@@ -19,8 +22,9 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.user = action.payload;
-      localStorage.setItem("userInfo", JSON.stringify(action.payload));
+      const user = { ...action.payload, role: normalizeRole(action.payload) };
+      state.user = user;
+      localStorage.setItem("userInfo", JSON.stringify(user));
     },
 
     logout: (state) => {

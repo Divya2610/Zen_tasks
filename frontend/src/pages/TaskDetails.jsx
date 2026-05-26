@@ -1,3 +1,345 @@
+// // src/pages/TaskDetails.jsx
+// import React, { useState, useEffect, useRef } from "react";
+// import { useParams, useNavigate } from "react-router-dom";
+// import { useSelector } from "react-redux";
+// import clsx from "clsx";
+// import { toast } from "sonner";
+// import Loader from "../components/Loader.jsx";
+// import api, { updateTaskStatus, uploadTaskDocument, postTaskActivity } from "../utils/api.js";
+
+// const STAGE_OPTIONS = ["todo", "in progress", "completed"];
+// const PRIORITY_BADGE = {
+//   high: "bg-red-100 text-red-700",
+//   medium: "bg-yellow-100 text-yellow-700",
+//   normal: "bg-blue-100 text-blue-700",
+//   low: "bg-gray-100 text-gray-600",
+// };
+
+// export default function TaskDetails() {
+//   const { id } = useParams();
+//   const navigate = useNavigate();
+//   const { user } = useSelector((state) => state.auth);
+//   const isAdmin = user?.isAdmin;
+//   const fileRef = useRef(null);
+
+//   const [task, setTask] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [stage, setStage] = useState("");
+//   const [updating, setUpdating] = useState(false);
+//   const [uploading, setUploading] = useState(false);
+//   const [comment, setComment] = useState("");
+//   const [postingComment, setPostingComment] = useState(false);
+
+//   // ── Fetch Task ─────────────────────────────────────────────────────────────
+//   const fetchTask = async () => {
+//     try {
+//       const { data } = await api.get(`/task/${id}`);
+//       setTask(data.task);
+//       setStage(data.task.stage);
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Task not found");
+//       navigate(-1);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchTask();
+//   }, [id]);
+
+//   // ── Status Update ──────────────────────────────────────────────────────────
+//   const handleStatusChange = async (newStage) => {
+//     if (newStage === stage) return;
+//     setUpdating(true);
+//     try {
+//       await updateTaskStatus(id, newStage);
+//       setStage(newStage);
+//       toast.success(`Status updated to "${newStage}"`);
+//       fetchTask();
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Failed to update status");
+//     } finally {
+//       setUpdating(false);
+//     }
+//   };
+
+//   // ── Document Upload ────────────────────────────────────────────────────────
+//   const handleFileChange = async (e) => {
+//     const file = e.target.files?.[0];
+//     if (!file) return;
+//     const formData = new FormData();
+//     formData.append("document", file);
+//     setUploading(true);
+//     try {
+//       await uploadTaskDocument(id, formData);
+//       toast.success("Document uploaded!");
+//       fetchTask();
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Upload failed");
+//     } finally {
+//       setUploading(false);
+//       if (fileRef.current) fileRef.current.value = "";
+//     }
+//   };
+
+//   // ── Comment ────────────────────────────────────────────────────────────────
+//   const handlePostComment = async () => {
+//     if (!comment.trim()) return;
+//     setPostingComment(true);
+//     try {
+//       await postTaskActivity(id, { type: "commented", activity: comment });
+//       setComment("");
+//       toast.success("Comment added!");
+//       fetchTask();
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Failed to post comment");
+//     } finally {
+//       setPostingComment(false);
+//     }
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-64">
+//         <Loader />
+//       </div>
+//     );
+//   }
+
+//   if (!task) return null;
+
+//   return (
+//     <div className="max-w-3xl mx-auto py-6 px-4">
+//       {/* ── Back ── */}
+//       <button
+//         onClick={() => navigate(-1)}
+//         className="text-sm text-blue-600 hover:underline mb-4 flex items-center gap-1"
+//       >
+//         ← Back
+//       </button>
+
+//       {/* ── Task Header ── */}
+//       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+//         <div className="flex items-start justify-between gap-4">
+//           <div>
+//             <h1 className="text-xl font-bold text-gray-800">{task.title}</h1>
+//             {task.description && (
+//               <p className="text-sm text-gray-500 mt-1">{task.description}</p>
+//             )}
+//           </div>
+//           <span
+//             className={clsx(
+//               "text-xs font-semibold px-2.5 py-1 rounded-full capitalize shrink-0",
+//               PRIORITY_BADGE[task.priority] || PRIORITY_BADGE.normal
+//             )}
+//           >
+//             {task.priority} priority
+//           </span>
+//         </div>
+
+//         <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-500">
+//           <span>
+//             📅 Due:{" "}
+//             <span className="font-medium text-gray-700">
+//               {new Date(task.date).toLocaleDateString()}
+//             </span>
+//           </span>
+//           <span>
+//             🏷 Stage:{" "}
+//             <span className="font-medium text-gray-700 capitalize">
+//               {stage}
+//             </span>
+//           </span>
+//         </div>
+
+//         {/* Team */}
+//         {task.team?.length > 0 && (
+//           <div className="mt-3">
+//             <p className="text-xs text-gray-500 mb-1">Assigned to:</p>
+//             <div className="flex flex-wrap gap-2">
+//               {task.team.map((m) => (
+//                 <span
+//                   key={m._id}
+//                   className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+//                 >
+//                   <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">
+//                     {m.name?.[0]?.toUpperCase()}
+//                   </span>
+//                   {m.name}
+//                 </span>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* ── Status Update (both admin and team member can change) ── */}
+//       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4">
+//         <h2 className="text-sm font-semibold text-gray-700 mb-3">
+//           Update Status
+//         </h2>
+//         <div className="flex gap-2 flex-wrap">
+//           {STAGE_OPTIONS.map((s) => (
+//             <button
+//               key={s}
+//               onClick={() => handleStatusChange(s)}
+//               disabled={updating}
+//               className={clsx(
+//                 "text-sm px-4 py-2 rounded-lg font-medium border capitalize transition-all",
+//                 stage === s
+//                   ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+//                   : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+//               )}
+//             >
+//               {s}
+//             </button>
+//           ))}
+//         </div>
+//         {updating && (
+//           <p className="text-xs text-blue-500 mt-2">Saving status…</p>
+//         )}
+//       </div>
+
+//       {/* ── Sub-tasks ── */}
+//       {task.subTasks?.length > 0 && (
+//         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4">
+//           <h2 className="text-sm font-semibold text-gray-700 mb-3">
+//             Sub-tasks
+//           </h2>
+//           <ul className="space-y-2">
+//             {task.subTasks.map((sub, i) => (
+//               <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+//                 <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+//                 <span className="flex-1">{sub.title}</span>
+//                 {sub.tag && (
+//                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+//                     {sub.tag}
+//                   </span>
+//                 )}
+//               </li>
+//             ))}
+//           </ul>
+//         </div>
+//       )}
+
+//       {/* ── Documents ── */}
+//       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4">
+//         <h2 className="text-sm font-semibold text-gray-700 mb-3">
+//           Documents
+//         </h2>
+
+//         {/* Existing documents */}
+//         {task.assets?.length > 0 ? (
+//           <ul className="space-y-1 mb-3">
+//             {task.assets.map((url, i) => (
+//               <li key={i}>
+//                 <a
+//                   href={`${import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000"}${url}`}
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   className="text-sm text-blue-600 hover:underline flex items-center gap-1.5"
+//                 >
+//                   📎 Document {i + 1}
+//                 </a>
+//               </li>
+//             ))}
+//           </ul>
+//         ) : (
+//           <p className="text-sm text-gray-400 mb-3">No documents uploaded yet.</p>
+//         )}
+
+//         {/* Upload */}
+//         <div className="flex items-center gap-3">
+//           <input
+//             ref={fileRef}
+//             type="file"
+//             className="hidden"
+//             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+//             onChange={handleFileChange}
+//             disabled={uploading}
+//           />
+//           <button
+//             onClick={() => fileRef.current?.click()}
+//             disabled={uploading}
+//             className={clsx(
+//               "text-sm px-4 py-2 rounded-lg border font-medium transition-all",
+//               uploading
+//                 ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+//                 : "bg-white text-blue-600 border-blue-300 hover:bg-blue-50"
+//             )}
+//           >
+//             {uploading ? "Uploading…" : "📁 Upload Document"}
+//           </button>
+//           <span className="text-xs text-gray-400">PDF, DOC, Images (max 10MB)</span>
+//         </div>
+//       </div>
+
+//       {/* ── Activity / Comments ── */}
+//       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+//         <h2 className="text-sm font-semibold text-gray-700 mb-3">
+//           Activity & Comments
+//         </h2>
+
+//         {/* Post comment */}
+//         <div className="flex gap-2 mb-4">
+//           <input
+//             type="text"
+//             value={comment}
+//             onChange={(e) => setComment(e.target.value)}
+//             onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
+//             placeholder="Add a comment…"
+//             className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
+//           />
+//           <button
+//             onClick={handlePostComment}
+//             disabled={postingComment || !comment.trim()}
+//             className="text-sm px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+//           >
+//             {postingComment ? "Posting…" : "Post"}
+//           </button>
+//         </div>
+
+//         {/* Activity list */}
+//         {task.activities?.length > 0 ? (
+//           <ul className="space-y-3">
+//             {[...task.activities].reverse().map((act, i) => (
+//               <li key={i} className="flex gap-3 text-sm">
+//                 <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+//                   {act.by?.name?.[0]?.toUpperCase() || "?"}
+//                 </div>
+//                 <div>
+//                   <p className="text-gray-700">
+//                     <span className="font-medium capitalize">{act.type}</span>
+//                     {": "}
+//                     {act.activity}
+//                   </p>
+//                   {act.by?.name && (
+//                     <p className="text-xs text-gray-400">by {act.by.name}</p>
+//                   )}
+//                   {act.docUrl && (
+//                     <a
+//                       href={`${import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000"}${act.docUrl}`}
+//                       target="_blank"
+//                       rel="noopener noreferrer"
+//                       className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
+//                     >
+//                       📎 View document
+//                     </a>
+//                   )}
+//                 </div>
+//               </li>
+//             ))}
+//           </ul>
+//         ) : (
+//           <p className="text-sm text-gray-400">No activity yet.</p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
+
 import clsx from "clsx";
 import moment from "moment";
 import React, { useState, useEffect, useRef } from "react";
@@ -27,6 +369,8 @@ import Loading from "../components/Loader";
 import Button from "../components/Button";
 import api from "../utils/api";
 import { useTasks } from "../context/TaskContext";
+import { getAssetHref, getAssetName, isImageAsset } from "../utils/assets";
+import { isAdminUser } from "../utils/role";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,10 +437,6 @@ const STAGE_OPTIONS = ["todo", "in progress", "completed"];
 
 // ─── Helper: file type detection ─────────────────────────────────────────────
 
-const isImage = (url) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-
-const getFileName = (url) => (url ? url.split("/").pop() : "file");
-
 // ─── Asset viewer (read-only) ─────────────────────────────────────────────────
 
 const AssetGrid = ({ assets }) => {
@@ -107,26 +447,26 @@ const AssetGrid = ({ assets }) => {
   }
   return (
     <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-3">
-      {assets.map((url, i) =>
-        isImage(url) ? (
-          <a key={i} href={url} target="_blank" rel="noreferrer">
+      {assets.map((asset, i) =>
+        isImageAsset(asset) ? (
+          <a key={i} href={getAssetHref(asset)} target="_blank" rel="noreferrer">
             <img
-              src={url}
-              alt={getFileName(url)}
+              src={getAssetHref(asset)}
+              alt={getAssetName(asset)}
               className="w-full rounded-lg h-28 md:h-36 object-cover cursor-pointer border border-gray-100 transition-transform duration-300 hover:scale-105 hover:shadow-lg"
             />
           </a>
         ) : (
           <a
             key={i}
-            href={url}
+            href={getAssetHref(asset)}
             target="_blank"
             rel="noreferrer"
             className="flex flex-col items-center justify-center gap-2 h-28 md:h-36 rounded-lg border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer p-3"
           >
             <MdInsertDriveFile className="text-4xl text-blue-400" />
             <span className="text-xs text-gray-500 truncate w-full text-center">
-              {getFileName(url)}
+              {getAssetName(asset)}
             </span>
           </a>
         )
@@ -285,7 +625,7 @@ const MemberActionPanel = ({ task, onTaskUpdated }) => {
 const TaskDetails = () => {
   const { id } = useParams();
   const { user } = useSelector((state) => state.auth);
-  const isAdmin = user?.isAdmin;
+  const isAdmin = isAdminUser(user);
 
   const [selected, setSelected] = useState(0);
   const [task, setTask] = useState(null);
@@ -332,7 +672,32 @@ const TaskDetails = () => {
 
   return (
     <div className="w-full flex flex-col gap-3 mb-4 overflow-y-hidden">
-      <h1 className="text-2xl text-gray-700 font-bold">{task?.title}</h1>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl text-gray-700 font-bold">{task?.title}</h1>
+        <div
+          className={clsx(
+            "w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+            isAdmin
+              ? "bg-blue-50 text-blue-700 border border-blue-100"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+          )}
+        >
+          {isAdmin ? "Admin view" : "Team member view"}
+        </div>
+      </div>
+
+      <div
+        className={clsx(
+          "rounded-lg border px-4 py-3 text-sm",
+          isAdmin
+            ? "bg-blue-50 border-blue-100 text-blue-800"
+            : "bg-emerald-50 border-emerald-100 text-emerald-800"
+        )}
+      >
+        {isAdmin
+          ? "You can manage this task, add sub-tasks, and review every uploaded attachment."
+          : "You can move this task between To Do, In Progress, and Completed, and upload your files."}
+      </div>
 
       <Tabs tabs={TABS} setSelected={setSelected}>
         {selected === 0 ? (

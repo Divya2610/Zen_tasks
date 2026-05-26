@@ -30,6 +30,7 @@ import { BsThreeDots } from "react-icons/bs";
 import { useTasks } from "../../context/TaskContext";
 import { BGS } from "../../utils";
 import api from "../../utils/api";
+import { getAssetHref, getAssetKeepUrl, getAssetName } from "../../utils/assets";
 import AddSubTask from "./AddSubTask";
 import ConfirmatioDialog from "../Dialogs";
 
@@ -223,7 +224,7 @@ const UserSelectDropdown = ({ allUsers = [], selected = [], onChange }) => {
 const PRIORITIES = ["high", "medium", "low"];
 const STAGES     = ["todo", "in progress", "completed"];
 
-const TaskDialog = ({ task }) => {
+const TaskDialog = ({ task, onChanged }) => {
   const { updateTask, deleteTask } = useTasks();
 
   // ── Dropdown ──
@@ -293,7 +294,7 @@ const TaskDialog = ({ task }) => {
   };
 
   const removeExistingAsset = (url) =>
-    setAssets((prev) => prev.filter((a) => a !== url));
+    setAssets((prev) => prev.filter((a) => getAssetKeepUrl(a) !== url));
 
   const removeNewFile = (idx) =>
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
@@ -312,12 +313,16 @@ const TaskDialog = ({ task }) => {
       assets:  [...assets, ...newFiles],
     });
     setSaving(false);
-    if (ok) setEditOpen(false);
+    if (ok) {
+      setEditOpen(false);
+      onChanged?.();
+    }
   };
 
   const handleDelete = async () => {
-    await deleteTask(task._id);
+    const ok = await deleteTask(task._id);
     setDeleteOpen(false);
+    if (ok) onChanged?.();
   };
 
   return (
@@ -488,8 +493,9 @@ const TaskDialog = ({ task }) => {
                       {/* Existing files on server */}
                       {assets.length > 0 && (
                         <ul className="mb-2 space-y-1">
-                          {assets.map((url) => {
-                            const name = url.split("/").pop();
+                          {assets.map((asset) => {
+                            const url = getAssetKeepUrl(asset);
+                            const name = getAssetName(asset);
                             return (
                               <li
                                 key={url}
@@ -497,7 +503,7 @@ const TaskDialog = ({ task }) => {
                               >
                                 <MdAttachFile className="text-gray-400 shrink-0" />
                                 <a
-                                  href={url}
+                                  href={getAssetHref(asset)}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="flex-1 truncate text-blue-600 hover:underline"
@@ -600,6 +606,7 @@ const TaskDialog = ({ task }) => {
         open={subTaskOpen}
         setOpen={setSubTaskOpen}
         id={task._id}
+        onSuccess={onChanged}
       />
 
       {/* ── Delete confirmation ───────────────────────────────────────────── */}

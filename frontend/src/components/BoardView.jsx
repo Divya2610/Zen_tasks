@@ -1,7 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import TaskCard from "./TaskCard";
+import { isAdminUser } from "../utils/role";
 
 const BoardView = ({ tasks }) => {
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = isAdminUser(user);
   // ✅ FIX: filter out any undefined/null items before mapping.
   //    If a task is undefined in the array, passing it to TaskCard → TaskDialog
   //    causes: "Cannot read properties of undefined (reading '_id')"
@@ -17,7 +21,7 @@ const BoardView = ({ tasks }) => {
         </p>
       ) : (
         safeTasks.map((task) => (
-          <TaskCard task={task} key={task._id} />
+          <TaskCard task={task} key={task._id} isAdmin={isAdmin} />
         ))
       )}
     </div>

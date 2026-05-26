@@ -22,6 +22,7 @@ const splitAssets = (assets = []) => {
   const files = [];
   (assets || []).forEach((a) => {
     if (typeof a === "string") existingAssets.push(a);
+    else if (a?.url) existingAssets.push(a.url);
     else if (a instanceof File) files.push(a);
   });
   return { existingAssets, files };
@@ -47,7 +48,7 @@ const buildPayload = ({
 }) => {
   if (files.length === 0) {
     return {
-      data: { title, stage, date, priority, team, assets: existingAssets },
+      data: { title, stage, date, priority, team, existingAssets },
       config: {},
     };
   }
@@ -60,7 +61,14 @@ const buildPayload = ({
   fd.append("team",           JSON.stringify(team));
   fd.append("existingAssets", JSON.stringify(existingAssets));
   files.forEach((f) => fd.append("assets", f));
-  return { data: fd, config: {} };
+
+  return {
+    data: fd,
+    // ✅ FIX: setting Content-Type to undefined forces axios to drop any
+    // instance-level "application/json" default and auto-generate the correct
+    // "multipart/form-data; boundary=<...>" header that multer requires.
+    config: { headers: { "Content-Type": undefined } },
+  };
 };
 
 // ─── Provider ─────────────────────────────────────────────────────────────────

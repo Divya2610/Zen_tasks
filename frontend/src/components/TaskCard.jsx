@@ -16,6 +16,8 @@ import { FaList } from "react-icons/fa";
 import { BGS, PRIORITY_STYLES, TASK_TYPE, formatDate } from "../utils";
 import TaskDialog from "./task/TaskDialog";
 import UserInfo from "./UserInfo";
+import { getAssetHref, getAssetName, getAssetRole, isImageAsset } from "../utils/assets";
+import { useTasks } from "../context/TaskContext";
 
 const ICONS = {
   high:   <MdKeyboardDoubleArrowUp />,
@@ -36,8 +38,8 @@ const isImage   = (a) => /\.(jpg|jpeg|png|gif|webp)$/i.test(assetUrl(a));
 
 // ── Download helper: forces browser download instead of navigating ────────────
 const downloadAsset = (asset) => {
-  const url  = assetUrl(asset);
-  const name = assetName(asset);
+  const url  = getAssetHref(asset);
+  const name = getAssetName(asset);
   const link = document.createElement("a");
   link.href     = url;
   link.download = name;
@@ -56,6 +58,7 @@ const MemberUploadPanel = ({ task, isAdmin }) => {
   const [uploading, setUploading] = useState(false);
   const [done,      setDone]      = useState(false);
   const inputRef = useRef();
+  const { updateTaskStatus } = useTasks();
 
   if (isAdmin) return null; // admins upload via the edit modal, not here
 
@@ -66,22 +69,8 @@ const MemberUploadPanel = ({ task, isAdmin }) => {
     if (!files.length) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      files.forEach((f) => fd.append("assets", f));
-
-      // If you also want to update the stage at the same time, append:
-      // fd.append("stage", selectedStage);
-
-      const res = await fetch(`/api/tasks/${task._id}/status`, {
-        method:  "PATCH",
-        headers: {
-          // Add your auth header here, e.g.:
-          // Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: fd,
-      });
-
-      if (!res.ok) throw new Error("Upload failed");
+      const ok = await updateTaskStatus(task._id, task.stage, files);
+      if (!ok) throw new Error("Upload failed");
       setDone(true);
       setFiles([]);
     } catch (err) {
@@ -156,7 +145,7 @@ const MemberUploadPanel = ({ task, isAdmin }) => {
 };
 
 // ── TaskCard ──────────────────────────────────────────────────────────────────
-const TaskCard = ({ task, isAdmin = false }) => {
+const TaskCard = ({ task, isAdmin = false, onChanged }) => {
   const assets   = task?.assets ?? [];
   const subTasks = task?.subTasks ?? [];
   const doneCount = subTasks.filter((s) => s.completed).length;
@@ -174,7 +163,7 @@ const TaskCard = ({ task, isAdmin = false }) => {
           {wasEdited(task) && (
             <span className="text-[10px] font-medium text-gray-400 italic">edited</span>
           )}
-          <TaskDialog task={task} />
+          {isAdmin && <TaskDialog task={task} onChanged={onChanged} />}
         </div>
       </div>
 
@@ -239,9 +228,9 @@ const TaskCard = ({ task, isAdmin = false }) => {
           </p>
           <div className="space-y-1.5">
             {assets.map((asset, i) => {
-              const url  = assetUrl(asset);
-              const name = assetName(asset);
-              const role = assetRole(asset);
+              const url  = getAssetHref(asset);
+              const name = getAssetName(asset);
+              const role = getAssetRole(asset);
 
               return (
                 <div
@@ -249,7 +238,7 @@ const TaskCard = ({ task, isAdmin = false }) => {
                   className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1.5 border border-gray-100"
                 >
                   {/* Thumbnail or icon */}
-                  {isImage(asset) ? (
+                  {isImageAsset(asset) ? (
                     <img
                       src={url}
                       alt={name}

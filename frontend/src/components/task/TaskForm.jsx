@@ -30,6 +30,7 @@ import { useTasks } from "../../context/TaskContext";
 import { PRIORITY_OPTIONS, STAGE_OPTIONS, formatDate, BGS } from "../../utils";
 import Button from "../Button";
 import api from "../../utils/api";
+import { getAssetHref, getAssetKeepUrl, getAssetName } from "../../utils/assets";
 
 // ─── Searchable multi-select user dropdown ────────────────────────────────────
 
@@ -222,7 +223,7 @@ const UserSelectDropdown = ({ allUsers = [], selected = [], onChange }) => {
 
 // ─── TaskForm ─────────────────────────────────────────────────────────────────
 
-const TaskForm = ({ open, setOpen, task = null }) => {
+const TaskForm = ({ open, setOpen, task = null, onSuccess }) => {
   const { user } = useSelector((state) => state.auth);
   const { createTask, updateTask } = useTasks();
   const isEdit = Boolean(task);
@@ -234,8 +235,16 @@ const TaskForm = ({ open, setOpen, task = null }) => {
   const [stage, setStage]       = useState("todo");
   const [date, setDate]         = useState("");
   const [team, setTeam]         = useState([]);           // selected user IDs
+
+  // Projects hierarchy selection for Create Task
+  // project -> objective -> motivation
+  const [projectName, setProjectName] = useState("");
+  const [objectiveName, setObjectiveName] = useState("");
+  const [motivationName, setMotivationName] = useState("");
+
   const [newFiles, setNewFiles] = useState([]);           // NEW File objects
   const [existingAssets, setExistingAssets] = useState([]); // URL strings from server
+
 
   // ── Users list ──
   const [users, setUsers]     = useState([]);
@@ -288,7 +297,45 @@ const TaskForm = ({ open, setOpen, task = null }) => {
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
 
   const removeExistingAsset = (url) =>
-    setExistingAssets((prev) => prev.filter((a) => a !== url));
+    setExistingAssets((prev) => prev.filter((a) => getAssetKeepUrl(a) !== url));
+
+  // ── Projects tree (static placeholder) ────────────────────────────────
+  // TODO: Replace with backend-driven Projects/Objectives/Motivations.
+  const PROJECTS_TREE = [
+    {
+      name: "Project Alpha",
+      objectives: [
+        {
+          name: "Objective 1",
+          motivations: ["Motivation A", "Motivation B", "Motivation C"],
+        },
+        {
+          name: "Objective 2",
+          motivations: ["Motivation D", "Motivation E"],
+        },
+      ],
+    },
+    {
+      name: "Project Beta",
+      objectives: [
+        {
+          name: "Objective X",
+          motivations: ["Motivation 1", "Motivation 2"],
+        },
+      ],
+    },
+  ];
+
+  const getObjectives = (tree, project) => {
+    const p = (tree || []).find((x) => x.name === project);
+    return p?.objectives || [];
+  };
+
+  const getMotivations = (tree, project, objective) => {
+    const objectives = getObjectives(tree, project);
+    const obj = (objectives || []).find((x) => x.name === objective);
+    return obj?.motivations || [];
+  };
 
   // ── Submit ──
   // FIX: pass assets as mixed array — TaskContext.splitAssets() separates
@@ -321,6 +368,7 @@ const TaskForm = ({ open, setOpen, task = null }) => {
     if (success) {
       setNewFiles([]);
       setOpen(false);
+      onSuccess?.();
     }
   };
 
@@ -371,6 +419,69 @@ const TaskForm = ({ open, setOpen, task = null }) => {
               onChange={setTeam}
             />
           </div>
+
+          {/* Project / Objective / Motivation */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Project Name
+              </label>
+              <select
+                value={projectName}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProjectName(v);
+                  setObjectiveName("");
+                  setMotivationName("");
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Select project…</option>
+                {(PROJECTS_TREE || []).map((p) => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Objective
+              </label>
+              <select
+                value={objectiveName}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setObjectiveName(v);
+                  setMotivationName("");
+                }}
+                disabled={!projectName}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              >
+                <option value="">Select objective…</option>
+                {(getObjectives(PROJECTS_TREE, projectName) || []).map((o) => (
+                  <option key={o.name} value={o.name}>{o.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Motivation
+              </label>
+              <select
+                value={motivationName}
+                onChange={(e) => setMotivationName(e.target.value)}
+                disabled={!objectiveName}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              >
+                <option value="">Select motivation…</option>
+                {(getMotivations(PROJECTS_TREE, projectName, objectiveName) || []).map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
 
           {/* Stage — EDIT mode only */}
           {isEdit && (
@@ -448,19 +559,21 @@ const TaskForm = ({ open, setOpen, task = null }) => {
             {isEdit && existingAssets.length > 0 && (
               <div className="mb-2 space-y-1">
                 <p className="text-xs text-gray-400 mb-1">Existing files:</p>
-                {existingAssets.map((url, i) => (
+                {existingAssets.map((asset, i) => {
+                  const url = getAssetKeepUrl(asset);
+                  return (
                   <div
                     key={i}
                     className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded px-2 py-1.5 border border-gray-200"
                   >
                     <MdInsertDriveFile className="text-blue-400 shrink-0" />
                     <a
-                      href={url}
+                      href={getAssetHref(asset)}
                       target="_blank"
                       rel="noreferrer"
                       className="truncate flex-1 text-blue-600 hover:underline"
                     >
-                      {url.split("/").pop()}
+                      {getAssetName(asset)}
                     </a>
                     <button
                       type="button"
@@ -471,7 +584,8 @@ const TaskForm = ({ open, setOpen, task = null }) => {
                       <MdOutlineDeleteOutline size={14} />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

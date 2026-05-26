@@ -1,3 +1,104 @@
+// import express from "express";
+// import multer from "multer";
+// import path from "path";
+// import {
+//   createSubTask,
+//   createTask,
+//   deleteRestoreTask,
+//   duplicateTask,
+//   getDashboardStats,
+//   getTask,
+//   getTasks,
+//   postTaskActivity,
+//   trashTask,
+//   updateTask,
+//   updateTaskStatus,
+//   uploadTaskDocument,
+// } from "../controllers/task.controller.js";
+// import { isAdminRoute, protectRoute } from "../middleware/authMiddleware.js";
+
+// const router = express.Router();
+
+// // ─── Multer Config for Document Uploads ──────────────────────────────────────
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "uploads/"); // Make sure this folder exists
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+//     cb(null, uniqueSuffix + path.extname(file.originalname));
+//   },
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   const allowed = [
+//     "application/pdf",
+//     "application/msword",
+//     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+//     "image/jpeg",
+//     "image/png",
+//     "image/gif",
+//     "text/plain",
+//   ];
+//   if (allowed.includes(file.mimetype)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error("File type not allowed"), false);
+//   }
+// };
+
+// const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
+
+// // ─── Routes ───────────────────────────────────────────────────────────────────
+
+// // Dashboard (filtered by role in controller)
+// router.get("/dashboard", protectRoute, getDashboardStats);
+
+// // Get all tasks (filtered: admin=all, team member=only assigned)
+// router.get("/", protectRoute, getTasks);
+
+// // Get single task
+// router.get("/:id", protectRoute, getTask);
+
+// // Create task (admin only – enforced in controller)
+// router.post("/create", protectRoute, isAdminRoute, createTask);
+
+// // Duplicate task (admin only)
+// router.post("/duplicate/:id", protectRoute, isAdminRoute, duplicateTask);
+
+// // Update task (admin only)
+// router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
+
+// // Update task STATUS — available to team members for their assigned tasks
+// router.patch("/update-status/:id", protectRoute, updateTaskStatus);
+
+// // Post activity / comment (team members allowed on their tasks)
+// router.post("/activity/:id", protectRoute, postTaskActivity);
+
+// // Upload document (team members allowed on their tasks)
+// router.post(
+//   "/upload-doc/:id",
+//   protectRoute,
+//   upload.single("document"),
+//   uploadTaskDocument
+// );
+
+// // Add sub-task (admin only)
+// router.put("/create-subtask/:id", protectRoute, isAdminRoute, createSubTask);
+
+// // Trash task (admin only)
+// router.put("/trash/:id", protectRoute, isAdminRoute, trashTask);
+
+// // Delete / restore (admin only)
+// router.delete(
+//   "/delete-restore/:id?",
+//   protectRoute,
+//   isAdminRoute,
+//   deleteRestoreTask
+// );
+
+// export default router;
+
 const express  = require("express");
 const router   = new express.Router();
 const multer   = require("multer");

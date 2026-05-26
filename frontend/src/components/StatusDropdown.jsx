@@ -63,7 +63,7 @@ const StatusDropdown = ({ taskId, current, onChange, readOnly = false }) => {
 
     try {
       setSaving(true);
-      await api.patch(`/tasks/${taskId}/stage`, { stage: newStage });
+      await api.patch(`/tasks/${taskId}/status`, { stage: newStage });
       onChange?.(newStage);
 
       const label = STAGES.find((s) => s.value === newStage)?.label;

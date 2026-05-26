@@ -57,3 +57,8 @@ docker-compose.override.yml
 # Local environment settings
 .env.local
 .env.*.local
+
+__MACOSX/
+._*
+.DS_Store
+backend/uploads/

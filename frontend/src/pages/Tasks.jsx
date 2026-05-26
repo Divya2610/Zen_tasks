@@ -1,15 +1,183 @@
+// // src/pages/Tasks.jsx
+// import React, { useState, useEffect, useCallback } from "react";
+// import { useSelector } from "react-redux";
+// import clsx from "clsx";
+// import { toast } from "sonner";
+// import Tabs from "../components/Tabs.jsx";
+// import TaskCard from "../components/TaskCard.jsx";
+// import TeamMemberTaskCard from "../components/TeamMemberTaskCard.jsx";
+// import Loader from "../components/Loader.jsx";
+// import { useSearchParams } from "react-router-dom";
+// import api from "../utils/api.js";
+
+// const TABS = [
+//   { title: "Board", icon: "🗂" },
+//   { title: "List", icon: "📋" },
+// ];
+
+// const STAGE_FILTERS = ["all", "todo", "in progress", "completed"];
+
+// export default function Tasks() {
+//   const { user } = useSelector((state) => state.auth);
+//   const isAdmin = user?.isAdmin;
+
+//   const [searchParams] = useSearchParams();
+//   const stageParam = searchParams.get("stage");
+
+//   const [tasks, setTasks] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [selected, setSelected] = useState(0); // tab index
+//   const [stageFilter, setStageFilter] = useState(stageParam || "all");
+
+//   // ── Fetch tasks (backend filters by role automatically) ───────────────────
+//   const fetchTasks = useCallback(async () => {
+//     setLoading(true);
+//     try {
+//       const params = {};
+//       if (stageFilter !== "all") params.stage = stageFilter;
+
+//       const { data } = await api.get("/task", { params });
+//       setTasks(data.tasks || []);
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Failed to load tasks");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [stageFilter]);
+
+//   useEffect(() => {
+//     fetchTasks();
+//   }, [fetchTasks]);
+
+//   // ── Grouping for Board view ───────────────────────────────────────────────
+//   const grouped = {
+//     todo: tasks.filter((t) => t.stage === "todo"),
+//     "in progress": tasks.filter((t) => t.stage === "in progress"),
+//     completed: tasks.filter((t) => t.stage === "completed"),
+//   };
+
+//   return (
+//     <div className="w-full">
+//       {/* ── Page Header ── */}
+//       <div className="flex items-center justify-between mb-4">
+//         <div>
+//           <h1 className="text-xl font-bold text-gray-800">
+//             {isAdmin ? "All Tasks" : "My Tasks"}
+//           </h1>
+//           <p className="text-sm text-gray-500 mt-0.5">
+//             {isAdmin
+//               ? "Manage all tasks across the team"
+//               : "Tasks assigned to you — update status or upload documents"}
+//           </p>
+//         </div>
+
+//         {/* Admin gets the "Add Task" button rendered from the Navbar/Sidebar – nothing extra here */}
+//       </div>
+
+//       {/* ── Stage Filter Pills ── */}
+//       <div className="flex items-center gap-2 flex-wrap mb-4">
+//         {STAGE_FILTERS.map((s) => (
+//           <button
+//             key={s}
+//             onClick={() => setStageFilter(s)}
+//             className={clsx(
+//               "text-xs px-3 py-1.5 rounded-full font-medium capitalize border transition-all",
+//               stageFilter === s
+//                 ? "bg-blue-600 text-white border-blue-600"
+//                 : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+//             )}
+//           >
+//             {s === "all" ? `All (${tasks.length})` : s}
+//           </button>
+//         ))}
+//       </div>
+
+//       {/* ── View Tabs (Board / List) ── */}
+//       <Tabs tabs={TABS} setSelected={setSelected}>
+//         {loading ? (
+//           <div className="flex justify-center py-16">
+//             <Loader />
+//           </div>
+//         ) : tasks.length === 0 ? (
+//           <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+//             <span className="text-5xl mb-3">📭</span>
+//             <p className="text-sm font-medium">
+//               {isAdmin ? "No tasks found." : "No tasks assigned to you yet."}
+//             </p>
+//           </div>
+//         ) : (
+//           <>
+//             {/* ── BOARD VIEW ── */}
+//             {selected === 0 && (
+//               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+//                 {Object.entries(grouped).map(([stage, stageTasks]) => (
+//                   <div key={stage}>
+//                     <div className="flex items-center gap-2 mb-3">
+//                       <h2 className="text-sm font-semibold text-gray-600 capitalize">
+//                         {stage}
+//                       </h2>
+//                       <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
+//                         {stageTasks.length}
+//                       </span>
+//                     </div>
+//                     <div className="space-y-3">
+//                       {stageTasks.map((task) =>
+//                         isAdmin ? (
+//                           <TaskCard key={task._id} task={task} />
+//                         ) : (
+//                           <TeamMemberTaskCard
+//                             key={task._id}
+//                             task={task}
+//                             onRefresh={fetchTasks}
+//                           />
+//                         )
+//                       )}
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             )}
+
+//             {/* ── LIST VIEW ── */}
+//             {selected === 1 && (
+//               <div className="mt-4 space-y-3">
+//                 {tasks.map((task) =>
+//                   isAdmin ? (
+//                     <TaskCard key={task._id} task={task} />
+//                   ) : (
+//                     <TeamMemberTaskCard
+//                       key={task._id}
+//                       task={task}
+//                       onRefresh={fetchTasks}
+//                     />
+//                   )
+//                 )}
+//               </div>
+//             )}
+//           </>
+//         )}
+//       </Tabs>
+//     </div>
+//   );
+// }
+
+
 import { useState, useEffect, useCallback } from "react";
 import { toast }            from "sonner";
 import clsx                 from "clsx";
 import moment               from "moment";
-import { MdOutlineAttachment, MdOutlineSubtitles } from "react-icons/md";
+import { MdAddTask, MdOutlineAttachment, MdOutlineSubtitles } from "react-icons/md";
 import { BiMessageRounded } from "react-icons/bi";
 import { FiDownload }       from "react-icons/fi";
 import { useSelector }      from "react-redux"; // adjust to your auth store
 import api                  from "../utils/api";
 import Loading              from "../components/Loader";
 import StatusDropdown       from "../components/StatusDropdown";
+import AdminTaskCard        from "../components/TaskCard";
+import TaskForm             from "../components/task/TaskForm";
 import { getInitials, TASK_TYPE, PRIORITY_STYLES } from "../utils";
+import { getAssetHref, getAssetName, getAssetRole } from "../utils/assets";
+import { isAdminUser } from "../utils/role";
 
 // ── Section config ────────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -20,7 +188,7 @@ const SECTIONS = [
 
 // ── Single task card ──────────────────────────────────────────────────────────
 const TaskCard = ({ task, currentUser, onStageChange }) => {
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = isAdminUser(currentUser);
 
   // Download an attachment
   const handleDownload = async (url, filename) => {
@@ -74,7 +242,7 @@ const TaskCard = ({ task, currentUser, onStageChange }) => {
         </span>
         <span className="flex items-center gap-1">
           <MdOutlineSubtitles className="text-sm" />
-          {task.subTasks?.filter((s) => s.isCompleted).length ?? 0}/
+          {task.subTasks?.filter((s) => s.completed).length ?? 0}/
           {task.subTasks?.length ?? 0}
         </span>
 
@@ -105,8 +273,11 @@ const TaskCard = ({ task, currentUser, onStageChange }) => {
           </p>
           <div className="flex flex-col gap-2">
             {task.assets.map((asset, i) => {
-              const filename = asset.split("/").pop() || `file-${i + 1}`;
+              const url      = getAssetHref(asset);
+              const filename = getAssetName(asset) || `file-${i + 1}`;
+              const role     = getAssetRole(asset);
               const short    = filename.length > 28 ? filename.slice(0, 25) + "…" : filename;
+
               return (
                 <div
                   key={i}
@@ -115,10 +286,12 @@ const TaskCard = ({ task, currentUser, onStageChange }) => {
                   <MdOutlineAttachment className="text-gray-400 text-base flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-700 truncate">{short}</p>
-                    <p className="text-[10px] text-violet-500">From admin</p>
+                    <p className="text-[10px] text-violet-500">
+                      {role === "admin" ? "From admin" : "From member"}
+                    </p>
                   </div>
                   <button
-                    onClick={() => handleDownload(asset, filename)}
+                    onClick={() => handleDownload(url, filename)}   // ✅ pass url, not asset
                     className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-100 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
                   >
                     <FiDownload className="text-sm" />
@@ -140,8 +313,8 @@ const TaskCard = ({ task, currentUser, onStageChange }) => {
           <ul className="flex flex-col gap-1.5">
             {task.subTasks.map((sub, i) => (
               <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
-                <span className={clsx("w-2 h-2 rounded-full flex-shrink-0", sub.isCompleted ? "bg-emerald-500" : "bg-gray-300")} />
-                <span className={sub.isCompleted ? "line-through text-gray-400" : ""}>{sub.title}</span>
+                <span className={clsx("w-2 h-2 rounded-full flex-shrink-0", sub.completed ? "bg-emerald-500" : "bg-gray-300")} />
+                <span className={sub.completed ? "line-through text-gray-400" : ""}>{sub.title}</span>
               </li>
             ))}
           </ul>
@@ -154,8 +327,10 @@ const TaskCard = ({ task, currentUser, onStageChange }) => {
 // ── Main Tasks page ───────────────────────────────────────────────────────────
 const Tasks = () => {
   const { user }          = useSelector((s) => s.auth);
+  const isAdmin = isAdminUser(user);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
 
   // ── Fetch tasks (backend already filters by user role) ──────────────────
   const fetchTasks = useCallback(async () => {
@@ -194,19 +369,46 @@ const Tasks = () => {
 
   return (
     <div className="h-full py-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">Tasks</h1>
-        <p className="text-sm text-gray-400">
-          {user?.role === "admin" ? "All tasks" : "Tasks assigned to you"} · {tasks.length} total
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            {isAdmin ? "Task Management" : "My Tasks"}
+          </h1>
+          <p className="text-sm text-gray-400">
+            {isAdmin
+              ? "Create, assign, edit, delete, add sub-tasks, and attach files."
+              : "Tasks assigned to you"} · {tasks.length} total
+          </p>
+        </div>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex w-fit items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            <MdAddTask className="text-lg" />
+            Create Task
+          </button>
+        )}
       </div>
 
       {tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
           <MdOutlineSubtitles className="text-6xl" />
           <p className="text-base">
-            {user?.role === "admin" ? "No tasks yet." : "No tasks assigned to you yet."}
+            {isAdmin ? "No tasks yet. Create one to assign work." : "No tasks assigned to you yet."}
           </p>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              <MdAddTask className="text-lg" />
+              Create Task
+            </button>
+          )}
         </div>
       ) : (
         /* ── Kanban-style three column layout ─────────────────────────── */
@@ -229,18 +431,35 @@ const Tasks = () => {
                   No tasks
                 </div>
               ) : (
-                grouped[section.key].map((task) => (
-                  <TaskCard
-                    key={task._id}
-                    task={task}
-                    currentUser={user}
-                    onStageChange={handleStageChange}
-                  />
-                ))
+                grouped[section.key].map((task) =>
+                  isAdmin ? (
+                    <AdminTaskCard
+                      key={task._id}
+                      task={task}
+                      isAdmin
+                      onChanged={fetchTasks}
+                    />
+                  ) : (
+                    <TaskCard
+                      key={task._id}
+                      task={task}
+                      currentUser={user}
+                      onStageChange={handleStageChange}
+                    />
+                  )
+                )
               )}
             </div>
           ))}
         </div>
+      )}
+
+      {isAdmin && (
+        <TaskForm
+          open={createOpen}
+          setOpen={setCreateOpen}
+          onSuccess={fetchTasks}
+        />
       )}
     </div>
   );
